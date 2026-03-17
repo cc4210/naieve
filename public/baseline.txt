@@ -1,0 +1,5 @@
+=== HIGH SCHOOL BASELINE ===
+Mathematics: Algebra, geometry, trigonometry (sin, cos, tan, Pythagorean theorem), basic calculus (derivatives, integrals), logarithms and exponentials, vectors (magnitude, direction, dot product), matrices (basic operations).
+Physics: Newton's laws (F = ma, action-reaction, inertia). Kinematics (v = u + at, s = ut + 0.5at², v² = u² + 2as). Work (W = Fd), kinetic energy (KE = 0.5mv²), potential energy (PE = mgh), conservation of energy. Momentum (p = mv), impulse. Waves (frequency, wavelength, speed = fλ). Basic electrostatics (Coulomb's law). Gravitational force (F = Gm1m2/r²).
+Chemistry: Atomic structure (protons, neutrons, electrons, electron shells). Periodic table (groups, periods, metals/non-metals). Chemical bonding (ionic, covalent, metallic). Balancing equations. Moles and molar mass. Ideal gas law (PV = nRT). Acids and bases (pH scale). Le Chatelier's principle (equilibrium shifts). Oxidation and reduction.
+Biology: Cell structure, photosynthesis (light energy → chemical energy), respiration (glucose → ATP).
