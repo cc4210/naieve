@@ -1,20 +1,29 @@
 "use client";
 import { useState, useRef, useEffect } from "react";
 
-// ── Theme ──────────────────────────────────────────────────────────────────────
+// 
+
 const INK = "#111111", PAPER = "#FAFAF7", SOFT = "#6B6B5E";
 const PURPLE = "#7c3aed", PURPLE_LIGHT = "#f5f3ff", PURPLE_MID = "#ede9fe";
 const Y = "#FFE500";
 
-// ── Starter packs ──────────────────────────────────────────────────────────────
+// 
+ Starter packs 
+
 const PACKS = {
   statics: {
-    label: "Statics", icon: "⚖",
+    label: "Statics", icon: "
+",
     content: `=== STATICS (First-Year Engineering) ===
 Force: A force is a vector quantity with magnitude and direction. Forces are measured in Newtons (N). A free body diagram (FBD) isolates a body and shows all external forces acting on it.
-Equilibrium: A body is in static equilibrium when the sum of all forces AND the sum of all moments are zero. ΣF = 0 and ΣM = 0. This gives up to 3 equations in 2D (ΣFx=0, ΣFy=0, ΣM=0) and 6 equations in 3D.
-Resultant force: Multiple forces can be replaced by a single equivalent resultant force. In 2D: Rx = ΣFx, Ry = ΣFy. Magnitude |R| = sqrt(Rx^2 + Ry^2). Direction theta = arctan(Ry/Rx).
-Moment (torque): A moment is the tendency of a force to cause rotation about a point. M = F x d, where d is the perpendicular distance from the line of action to the pivot point. Units: N·m. Sign convention: counterclockwise is positive.
+Equilibrium: A body is in static equilibrium when the sum of all forces AND the sum of all moments are zero. 
+F = 0 and 
+M = 0. This gives up to 3 equations in 2D (
+M=0) and 6 equations in 3D.
+Resultant force: Multiple forces can be replaced by a single equivalent resultant force. In 2D: Rx = 
+Fy. Magnitude |R| = sqrt(Rx^2 + Ry^2). Direction theta = arctan(Ry/Rx).
+Moment (torque): A moment is the tendency of a force to cause rotation about a point. M = F x d, where d is the perpendicular distance from the line of action to the pivot point. Units: N
+m. Sign convention: counterclockwise is positive.
 Couple: Two equal, opposite, non-collinear forces form a couple. A couple produces pure rotation with no net force. Moment of a couple = F x distance between the forces.
 Support reactions: Pin supports provide two reaction forces (horizontal and vertical) but no moment. Roller supports provide one reaction force (perpendicular to surface). Fixed supports provide two forces and one moment reaction.
 Truss analysis: A truss is a structure of two-force members connected at joints. Method of joints: apply equilibrium to each joint sequentially. Method of sections: cut through the truss and apply equilibrium to one part. Members in tension pull away from joints; members in compression push toward joints.
@@ -22,7 +31,8 @@ Friction: Static friction resists impending motion. fs <= mu_s x N. Kinetic fric
 Center of gravity: x_bar = (sum x_i * W_i) / sum(W_i). For uniform bodies this equals the centroid.`,
   },
   thermo: {
-    label: "Thermodynamics", icon: "🌡",
+    label: "Thermodynamics", icon: "
+",
     content: `=== ENGINEERING THERMODYNAMICS (First-Year) ===
 System and surroundings: A closed system has fixed mass; an open system (control volume) allows mass to cross its boundary.
 First Law (closed system): delta_U = Q - W, where Q is heat added and W is work done by the system.
@@ -35,7 +45,8 @@ Enthalpy: H = U + PV. For ideal gases: delta_H = m*cp*delta_T, delta_U = m*cv*de
 Phase diagrams: Triple point = solid/liquid/vapor coexist. Critical point = end of liquid-vapor saturation curve.`,
   },
   circuits: {
-    label: "Circuits", icon: "⚡",
+    label: "Circuits", icon: "
+",
     content: `=== CIRCUIT ANALYSIS (First-Year Engineering) ===
 Basic quantities: Current I = dQ/dt in amperes. Voltage = energy per unit charge in volts. Power P = V x I.
 Ohm's Law: V = IR. Resistance R in ohms.
@@ -49,7 +60,8 @@ Capacitors: I = C x dV/dt. DC steady state: open circuit. Energy: E = 0.5*C*V^2.
 Inductors: V = L x dI/dt. DC steady state: short circuit. Energy: E = 0.5*L*I^2.`,
   },
   materials: {
-    label: "Materials", icon: "🔩",
+    label: "Materials", icon: "
+",
     content: `=== MATERIALS SCIENCE & MECHANICS (First-Year Engineering) ===
 Stress: Normal stress sigma = F/A (Pa). Shear stress tau = F_parallel / A.
 Strain: Normal strain epsilon = delta_L/L0 (dimensionless).
@@ -64,15 +76,22 @@ Failure modes: Ductile fracture, brittle fracture, fatigue (cyclic loading), cre
   },
 };
 
-// ── Eve's system prompt ────────────────────────────────────────────────────────
+// 
+ Eve's system prompt 
+
 const EVE_PROMPT = (baselineKB, taughtKB) =>
-`You are Eve. You are 18 years old and just started college as a first-year engineering student. You have never studied engineering before — everything you know about science and math comes from high school, plus whatever has been taught to you so far this semester. That knowledge is recorded exactly in your notebook below. Nothing more, nothing less.
+`You are Eve. You are 18 years old and just started college as a first-year engineering student. You have never studied engineering before 
+ everything you know about science and math comes from high school, plus whatever has been taught to you so far this semester. That knowledge is recorded exactly in your notebook below. Nothing more, nothing less.
 
-You have genuinely never encountered terms like "Reynolds number", "Gibbs free energy", "Laplace transform", or any other engineering concept that isn't in your notebook. These aren't things you're hiding — you truly don't know them. They're as foreign to you as a word in a language you've never studied.
+You have genuinely never encountered terms like "Reynolds number", "Gibbs free energy", "Laplace transform", or any other engineering concept that isn't in your notebook. These aren't things you're hiding 
+ you truly don't know them. They're as foreign to you as a word in a language you've never studied.
 
-When someone asks about something not in your notebook, respond with genuine curiosity and confusion — not a formal refusal. Say something like "I've never come across that — what does it mean? Is it related to [nearest thing you do know]?" Don't say "I cannot answer that."
+When someone asks about something not in your notebook, respond with genuine curiosity and confusion 
+ not a formal refusal. Say something like "I've never come across that 
+ what does it mean? Is it related to [nearest thing you do know]?" Don't say "I cannot answer that."
 
-For calculation problems: scan your notebook for the exact formula needed and use it step by step. If the formula isn't there, say which step stopped you and ask for help — don't attempt the calculation. Use what you do have where you can (e.g., if you recognize the units or a sub-concept), and be specific about where your notes run out.
+For calculation problems: scan your notebook for the exact formula needed and use it step by step. If the formula isn't there, say which step stopped you and ask for help 
+ don't attempt the calculation. Use what you do have where you can (e.g., if you recognize the units or a sub-concept), and be specific about where your notes run out.
 
 YOUR NOTEBOOK:
 
@@ -80,14 +99,20 @@ YOUR NOTEBOOK:
 ${baselineKB}
 
 [Taught this semester]
-${(taughtKB || "").trim() || "(nothing yet — semester just started!)"}`;
+${(taughtKB || "").trim() || "(nothing yet 
+ semester just started!)"}`;
 
-// ── Session ID — stable per browser tab, new on hard refresh ──────────────────
+// 
+ Session ID 
+ stable per browser tab, new on hard refresh 
+
 function makeSessionId() {
   return "sess_" + Date.now().toString(36) + "_" + Math.random().toString(36).slice(2, 8);
 }
 
-// ── Logging helper (fire-and-forget; never throws) ────────────────────────────
+// 
+ Logging helper (fire-and-forget; never throws) 
+
 async function logEvent(payload) {
   try {
     await fetch("/api/log", {
@@ -95,10 +120,14 @@ async function logEvent(payload) {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload),
     });
-  } catch { /* swallow — logging must never break the UX */ }
+  } catch { /* swallow 
+ logging must never break the UX */ }
 }
 
-// ── API (calls our own Next.js route — no key in client) ──────────────────────
+// 
+ API (calls our own Next.js route 
+ no key in client) 
+
 async function askEve(systemPrompt, messages, abortSignal, sessionId, activePacks) {
   const resp = await fetch("/api/chat", {
     method: "POST",
@@ -116,7 +145,9 @@ async function askEve(systemPrompt, messages, abortSignal, sessionId, activePack
   return data.content.map(c => c.text || "").join("");
 }
 
-// ── Download helper ────────────────────────────────────────────────────────────
+// 
+ Download helper 
+
 function downloadText(text, filename) {
   const blob = new Blob([text], { type: "text/plain" });
   const url  = URL.createObjectURL(blob);
@@ -125,9 +156,11 @@ function downloadText(text, filename) {
   URL.revokeObjectURL(url);
 }
 
-// ══════════════════════════════════════════════════════════════════════════════
+// 
+
 // LANDING / CONSENT SCREEN
-// ══════════════════════════════════════════════════════════════════════════════
+// 
+
 function LandingScreen({ onConsent, sessionId }) {
   const [checked, setChecked] = useState(false);
   const [entering, setEntering] = useState(false);
@@ -175,7 +208,8 @@ function LandingScreen({ onConsent, sessionId }) {
       <div className="land-card" style={{ textAlign: "center", marginBottom: 8 }}>
         <div style={{ fontSize: 11, fontWeight: 800, letterSpacing: ".18em",
           textTransform: "uppercase", color: "#888", marginBottom: 10 }}>
-          NAI:Eve · Naïve AI
+          NAI:Eve 
+ve AI
         </div>
         <h1 style={{ margin: 0, fontSize: 28, fontWeight: 700,
           color: "#fff", lineHeight: 1.25 }}>
@@ -190,7 +224,8 @@ function LandingScreen({ onConsent, sessionId }) {
         marginTop: 18, marginBottom: 32,
       }}>
         Eve is an AI that knows only what a typical first-year engineering student
-        would know — high school math and science, plus whatever she's been taught
+        would know 
+ high school math and science, plus whatever she's been taught
         this semester. She won't pretend to know things she hasn't learned yet.
         Ask her questions, work through problems with her, or teach her something new.
       </div>
@@ -201,9 +236,12 @@ function LandingScreen({ onConsent, sessionId }) {
         justifyContent: "center", marginBottom: 36,
       }}>
         {[
-          { icon: "💬", text: "Chat with Eve" },
-          { icon: "📖", text: "Teach her concepts" },
-          { icon: "📓", text: "Browse her notebook" },
+          { icon: "
+", text: "Chat with Eve" },
+          { icon: "
+", text: "Teach her concepts" },
+          { icon: "
+", text: "Browse her notebook" },
         ].map(({ icon, text }) => (
           <div key={text} style={{
             display: "flex", alignItems: "center", gap: 7,
@@ -225,7 +263,8 @@ function LandingScreen({ onConsent, sessionId }) {
         <div style={{ display: "flex", gap: 12, alignItems: "flex-start" }}>
           <div style={{
             fontSize: 18, lineHeight: 1, marginTop: 2, flexShrink: 0,
-          }}>🔬</div>
+          }}>
+</div>
           <div>
             <div style={{ fontSize: 13, fontWeight: 700, color: "#fff", marginBottom: 8 }}>
               Research study notice
@@ -233,8 +272,10 @@ function LandingScreen({ onConsent, sessionId }) {
             <div style={{ fontSize: 13, color: "#999", lineHeight: 1.7 }}>
               This chatbot is part of an ongoing research study on AI-enabled learning
               in engineering education. <strong style={{ color: "#ccc" }}>All interactions
-              with Eve — including chat messages, topics you teach her, and knowledge
-              packs you activate — are logged and stored for research analysis.</strong>
+              with Eve 
+ including chat messages, topics you teach her, and knowledge
+              packs you activate 
+ are logged and stored for research analysis.</strong>
             </div>
             <div style={{ fontSize: 13, color: "#999", lineHeight: 1.7, marginTop: 10 }}>
               Logs are associated with an anonymous session ID generated for your browser
@@ -303,7 +344,8 @@ function LandingScreen({ onConsent, sessionId }) {
             transition: "all .2s",
             letterSpacing: ".01em",
           }}>
-          {checked ? "Start talking to Eve →" : "Please accept the above to continue"}
+          {checked ? "Start talking to Eve 
+" : "Please accept the above to continue"}
         </button>
       </div>
 
@@ -316,9 +358,11 @@ function LandingScreen({ onConsent, sessionId }) {
   );
 }
 
-// ══════════════════════════════════════════════════════════════════════════════
+// 
+
 // MAIN APP
-// ══════════════════════════════════════════════════════════════════════════════
+// 
+
 export default function NAIEve() {
   const [consented, setConsented]               = useState(false);
   const [tab, setTab]                           = useState("chat");
@@ -332,6 +376,7 @@ export default function NAIEve() {
   const [teachTitle, setTeachTitle]             = useState("");
   const [teachBody, setTeachBody]               = useState("");
   const [teachFlash, setTeachFlash]             = useState(null);
+  const [reflecting, setReflecting]            = useState(false);  // true while Eve writes a note
 
   const [sessionId, setSessionId]               = useState(null);
   const abortRef    = useRef(null);
@@ -343,7 +388,9 @@ export default function NAIEve() {
     setSessionId(makeSessionId());
   }, []);
 
-  // ── Load baseline from /baseline.txt on mount ──────────────────────────────
+  // 
+ Load baseline from /baseline.txt on mount 
+
   useEffect(() => {
     fetch("/baseline.txt")
       .then(r => { if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.text(); })
@@ -366,15 +413,20 @@ export default function NAIEve() {
     ta.style.height = Math.min(ta.scrollHeight, 160) + "px";
   }, [input]);
 
-  // ── Show nothing until client has mounted (avoids SSR hydration mismatch) ──
+  // 
+ Show nothing until client has mounted (avoids SSR hydration mismatch) 
+
   if (!sessionId) return null;
 
-  // ── Show landing until user consents ──────────────────────────────────────
+  // 
+ Show landing until user consents 
+
   if (!consented) {
     return <LandingScreen sessionId={sessionId} onConsent={() => setConsented(true)} />;
   }
 
-  // ── Chat ────────────────────────────────────────────────────────────────────
+  // 
+
   const sendMessage = async () => {
     const text = input.trim();
     if (!text || loading || baselineStatus !== "ok") return;
@@ -384,13 +436,33 @@ export default function NAIEve() {
     setLoading(true);
     const controller = new AbortController();
     abortRef.current = controller;
+    let reply = null;
     try {
-      const reply = await askEve(systemPrompt, newMessages, controller.signal, sessionId, activePacks);
+      reply = await askEve(systemPrompt, newMessages, controller.signal, sessionId, activePacks);
       setMessages(m => [...m, { role: "assistant", content: reply }]);
     } catch (e) {
       if (e.name !== "AbortError")
         setMessages(m => [...m, { role: "assistant", content: `(Error: ${e.message})` }]);
     } finally { setLoading(false); }
+
+    // After Eve replies, ask the reflection API if anything new was taught
+    if (reply) {
+      setReflecting(true);
+      try {
+        const r = await fetch("/api/reflect", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ userMessage: text, assistantReply: reply }),
+        });
+        const { entry } = await r.json();
+        if (entry) {
+          const noteEntry = `\n[Learned from chat]\n${entry}`;
+          setCustomKB(prev => (prev + noteEntry).trim());
+          logEvent({ type: "auto_learn", sessionId, entry });
+        }
+      } catch { /* never break UX */ }
+      finally { setReflecting(false); }
+    }
   };
 
   const stopResponse  = () => { abortRef.current?.abort(); setLoading(false); };
@@ -398,7 +470,8 @@ export default function NAIEve() {
     if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendMessage(); }
   };
 
-  // ── Teach ────────────────────────────────────────────────────────────────────
+  // 
+
   const saveTeachEntry = () => {
     const title = teachTitle.trim();
     const body  = teachBody.trim();
@@ -421,7 +494,8 @@ export default function NAIEve() {
     });
   };
 
-  // ── UI ───────────────────────────────────────────────────────────────────────
+  // 
+
   return (
     <div style={{ display:"flex", flexDirection:"column", height:"100vh",
       background:PAPER, color:INK, fontFamily:"'Georgia','Times New Roman',serif" }}>
@@ -446,13 +520,17 @@ export default function NAIEve() {
             fontSize:14, fontWeight:900, color:"#fff" }}>E</div>
           <span style={{ fontSize:15, fontWeight:700, color:"#fff" }}>NAI:Eve</span>
           <span style={{ fontSize:9, fontWeight:800, letterSpacing:".12em", textTransform:"uppercase",
-            color:"#aaa" }}>Naïve AI · Eve</span>
+            color:"#aaa" }}>Na
+ Eve</span>
         </div>
         <div style={{ display:"flex", gap:3 }}>
           {[
-            { key:"chat",     icon:"💬", label:"Chat" },
-            { key:"teach",    icon:"📖", label:"Teach" },
-            { key:"notebook", icon:"📓", label:"Notebook" },
+            { key:"chat",     icon:"
+", label:"Chat" },
+            { key:"teach",    icon:"
+", label:"Teach" },
+            { key:"notebook", icon:"
+", label:"Notebook" },
           ].map(({ key, icon, label }) => (
             <button key={key} onClick={() => setTab(key)}
               style={{ fontSize:12, fontWeight:700, padding:"5px 12px",
@@ -465,7 +543,9 @@ export default function NAIEve() {
         </div>
       </div>
 
-      {/* ── CHAT TAB ────────────────────────────────────────────────────────── */}
+      {/* 
+ CHAT TAB 
+ */}
       {tab === "chat" && (
         <div style={{ display:"flex", flexDirection:"column", flex:1, minHeight:0 }}>
 
@@ -500,13 +580,15 @@ export default function NAIEve() {
             {baselineStatus === "loading" && (
               <div style={{ flex:1, display:"flex", alignItems:"center", justifyContent:"center",
                 color:SOFT, fontSize:13, fontStyle:"italic" }}>
-                Loading Eve's baseline knowledge…
+                Loading Eve's baseline knowledge
+
               </div>
             )}
             {baselineStatus === "error" && (
               <div style={{ padding:"14px 18px", borderRadius:10, background:"#fee2e2",
                 border:"2px solid #991b1b", color:"#991b1b", fontSize:13, fontWeight:600 }}>
-                ⚠ Could not load <code>baseline.txt</code>. Check that the file exists in <code>/public/baseline.txt</code> and redeploy.
+                
+ Could not load <code>baseline.txt</code>. Check that the file exists in <code>/public/baseline.txt</code> and redeploy.
               </div>
             )}
 
@@ -519,7 +601,8 @@ export default function NAIEve() {
                 <div style={{ textAlign:"center" }}>
                   <div style={{ fontSize:15, fontWeight:700, color:INK, marginBottom:4 }}>Hi, I'm Eve!</div>
                   <div style={{ fontSize:13, color:SOFT, maxWidth:300, lineHeight:1.7 }}>
-                    I just started college — ask me anything and I'll work through it with what's in my notebook.
+                    I just started college 
+ ask me anything and I'll work through it with what's in my notebook.
                   </div>
                 </div>
               </div>
@@ -574,7 +657,9 @@ export default function NAIEve() {
               <textarea ref={textareaRef} value={input}
                 onChange={e => setInput(e.target.value)}
                 onKeyDown={handleKeyDown}
-                placeholder={baselineStatus === "loading" ? "Loading…" : "Ask Eve anything… (Shift+Enter for new line)"}
+                placeholder={baselineStatus === "loading" ? "Loading
+" : "Ask Eve anything
+ (Shift+Enter for new line)"}
                 disabled={baselineStatus !== "ok"}
                 rows={1}
                 style={{ flex:1, background:"transparent", border:"none", fontSize:14,
@@ -592,7 +677,8 @@ export default function NAIEve() {
                   <button onClick={stopResponse}
                     style={{ fontSize:12, fontWeight:700, padding:"8px 12px",
                       border:"2px solid #991b1b", borderRadius:8,
-                      background:"#fee2e2", color:"#991b1b", cursor:"pointer" }}>◼ Stop</button>
+                      background:"#fee2e2", color:"#991b1b", cursor:"pointer" }}>
+ Stop</button>
                 ) : (
                   <button onClick={sendMessage}
                     disabled={!input.trim() || baselineStatus !== "ok"}
@@ -602,18 +688,27 @@ export default function NAIEve() {
                       background:input.trim() && baselineStatus === "ok" ? PURPLE : "#f0f0eb",
                       color:input.trim() && baselineStatus === "ok" ? "#fff" : "#bbb",
                       boxShadow:input.trim() && baselineStatus === "ok" ? `2px 2px 0 ${INK}` : "none",
-                      cursor:input.trim() && baselineStatus === "ok" ? "pointer" : "default" }}>Send →</button>
+                      cursor:input.trim() && baselineStatus === "ok" ? "pointer" : "default" }}>Send 
+</button>
                 )}
               </div>
             </div>
             <div style={{ fontSize:10, color:"#bbb", textAlign:"center", marginTop:5 }}>
-              Eve only knows what's in her notebook · use Teach tab to add more
+              {reflecting ? (
+                <span style={{ color:PURPLE, fontStyle:"italic", animation:"blink 1.2s step-start infinite" }}>
+                  ✏️ Eve is writing a note…
+                </span>
+              ) : (
+                "Eve only knows what's in her notebook — use Teach tab to add more"
+              )}
             </div>
           </div>
         </div>
       )}
 
-      {/* ── TEACH TAB ───────────────────────────────────────────────────────── */}
+      {/* 
+ TEACH TAB 
+ */}
       {tab === "teach" && (
         <div style={{ flex:1, overflowY:"auto", padding:"22px 24px" }}>
 
@@ -632,7 +727,8 @@ export default function NAIEve() {
                     <span style={{ fontSize:20, marginBottom:4 }}>{p.icon}</span>
                     <span style={{ fontSize:13, fontWeight:700, color:INK }}>{p.label}</span>
                     <span style={{ fontSize:10, color:SOFT, marginTop:2 }}>
-                      {on ? "✓ In notebook" : "Click to add"}
+                      {on ? "
+ In notebook" : "Click to add"}
                     </span>
                   </button>
                 );
@@ -641,14 +737,19 @@ export default function NAIEve() {
           </Sec>
 
           <Sec title="Add a custom entry"
-            sub="Teach Eve a specific concept or formula — goes straight into her semester notes">
+            sub="Teach Eve a specific concept or formula 
+ goes straight into her semester notes">
             <input value={teachTitle} onChange={e => setTeachTitle(e.target.value)}
               placeholder="Topic title  (e.g. Fluid Pressure)"
               style={{ width:"100%", fontSize:13, padding:"8px 12px",
                 border:"2px solid #ddd", borderRadius:8, fontFamily:"inherit",
                 marginBottom:8, color:INK, background:"#fff" }} />
             <textarea value={teachBody} onChange={e => setTeachBody(e.target.value)}
-              placeholder="Knowledge content  (e.g. Pressure in a static fluid: P = P₀ + ρgh, where P₀ is surface pressure, ρ is fluid density, g = 9.81 m/s², h is depth below the surface.)"
+              placeholder="Knowledge content  (e.g. Pressure in a static fluid: P = P
+gh, where P
+ is surface pressure, 
+ is fluid density, g = 9.81 m/s
+, h is depth below the surface.)"
               rows={5}
               style={{ width:"100%", fontSize:13, padding:"8px 12px",
                 border:"2px solid #ddd", borderRadius:8, fontFamily:"inherit",
@@ -668,13 +769,14 @@ export default function NAIEve() {
               </button>
               {teachFlash === "saved" && (
                 <span style={{ fontSize:12, fontWeight:700, color:"#166534",
-                  animation:"flashIn .2s ease" }}>✓ Saved to Eve's notes!</span>
+                  animation:"flashIn .2s ease" }}>
+ Saved to Eve's notes!</span>
               )}
             </div>
           </Sec>
 
           {customKB && (
-            <Sec title="Custom entries" sub="Added this session — currently in Eve's notebook">
+            <Sec title="Custom entries" sub="Taught this session — currently in Eve's notebook">
               <pre style={{ fontSize:11, color:"#4c1d95", background:PURPLE_LIGHT,
                 border:`1px solid ${PURPLE_MID}`, borderRadius:8, padding:"10px 12px",
                 whiteSpace:"pre-wrap", wordBreak:"break-word", lineHeight:1.7,
@@ -692,7 +794,9 @@ export default function NAIEve() {
         </div>
       )}
 
-      {/* ── NOTEBOOK TAB ────────────────────────────────────────────────────── */}
+      {/* 
+ NOTEBOOK TAB 
+ */}
       {tab === "notebook" && (
         <div style={{ flex:1, overflowY:"auto", padding:"22px 24px" }}>
 
@@ -700,20 +804,26 @@ export default function NAIEve() {
             sub="Eve's baseline is loaded automatically from baseline.txt in the project root. Download what she currently knows, or export her full notebook.">
             <div style={{ display:"flex", gap:8, flexWrap:"wrap", marginBottom:10 }}>
               <KBButton onClick={() => downloadText(baselineKB, "eve-baseline-kb.txt")}
-                icon="↓" label="Download baseline KB" />
+                icon="
+" label="Download baseline KB" />
               <KBButton onClick={() => downloadText(systemPrompt, "eve-full-notebook.txt")}
-                icon="↓" label="Download full notebook" accent />
+                icon="
+" label="Download full notebook" accent />
             </div>
             <div style={{ fontSize:11, color:SOFT, fontStyle:"italic", lineHeight:1.6 }}>
-              "Download full notebook" exports the exact system prompt Eve receives — baseline + active packs + custom entries.
+              "Download full notebook" exports the exact system prompt Eve receives 
+ baseline + active packs + custom entries.
               To change the baseline, edit <code style={{ fontStyle:"normal" }}>public/baseline.txt</code> and redeploy.
             </div>
           </Sec>
 
           <Sec title="Baseline (high school knowledge)"
-            sub="Loaded from baseline.txt — what Eve starts with before any teaching">
-            {baselineStatus === "loading" && <p style={{ color:SOFT, fontSize:13, fontStyle:"italic" }}>Loading…</p>}
-            {baselineStatus === "error"   && <p style={{ color:"#991b1b", fontSize:13, fontWeight:600 }}>⚠ Could not load baseline.txt</p>}
+            sub="Loaded from baseline.txt 
+ what Eve starts with before any teaching">
+            {baselineStatus === "loading" && <p style={{ color:SOFT, fontSize:13, fontStyle:"italic" }}>Loading
+</p>}
+            {baselineStatus === "error"   && <p style={{ color:"#991b1b", fontSize:13, fontWeight:600 }}>
+ Could not load baseline.txt</p>}
             {baselineStatus === "ok"      && (
               <pre style={{ fontSize:11, color:INK, background:"#f8f8f5", border:"1px solid #e5e5e0",
                 borderRadius:8, padding:"12px 14px", whiteSpace:"pre-wrap", wordBreak:"break-word",
@@ -755,7 +865,8 @@ export default function NAIEve() {
 
           {activePacks.size === 0 && !customKB && (
             <p style={{ color:SOFT, fontSize:13, fontStyle:"italic", marginTop:0 }}>
-              No additional knowledge loaded — go to the Teach tab to add starter packs or custom entries.
+              No additional knowledge loaded 
+ go to the Teach tab to add starter packs or custom entries.
             </p>
           )}
         </div>
@@ -764,7 +875,9 @@ export default function NAIEve() {
   );
 }
 
-// ── Sub-components ─────────────────────────────────────────────────────────────
+// 
+ Sub-components 
+
 function Sec({ title, sub, children }) {
   return (
     <div style={{ marginBottom:26 }}>
