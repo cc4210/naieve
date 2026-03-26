@@ -1,4 +1,5 @@
-import { sql } from "@vercel/postgres";
+import { neon } from "@neondatabase/serverless";
+import { waitUntil } from "@vercel/functions";
 
 // Retry with exponential backoff — handles 529 Overloaded, 5xx, and empty responses
 async function fetchWithRetry(url, options, maxRetries = 3) {
@@ -18,7 +19,6 @@ async function safeJson(resp) {
   if (!text || !text.trim()) return null;
   try { return JSON.parse(text); } catch { return null; }
 }
-
 
 export async function POST(req) {
   let body;
@@ -66,19 +66,23 @@ export async function POST(req) {
 
   const replyText = (data.content || []).map(c => c.text || "").join("");
 
-  // ── Log to Postgres (fire-and-forget; never blocks or breaks the response) ─
-  if (sessionId) {
+  // ── Log to Postgres (waitUntil keeps function alive until logging completes) ─
+  if (sessionId && process.env.naieve_db_POSTGRES_URL_NON_POOLING) {
+    const sql = neon(process.env.naieve_db_POSTGRES_URL_NON_POOLING);
     const lastUserMsg = [...messages].reverse().find(m => m.role === "user");
-    Promise.all([
-      lastUserMsg
-        ? sql`INSERT INTO chat_logs (session_id, role, content, active_packs)
-               VALUES (${sessionId}, 'user', ${lastUserMsg.content}, ${activePacks})`
-        : Promise.resolve(),
-      replyText
-        ? sql`INSERT INTO chat_logs (session_id, role, content, active_packs)
-               VALUES (${sessionId}, 'assistant', ${replyText}, ${activePacks})`
-        : Promise.resolve(),
-    ]).catch(err => console.error("Chat log error:", err));
+    waitUntil(
+      Promise.all([
+        lastUserMsg
+          ? sql`INSERT INTO chat_logs (session_id, role, content, active_packs)
+                 VALUES (${sessionId}, 'user', ${lastUserMsg.content}, ${activePacks})`
+          : Promise.resolve(),
+        replyText
+          ? sql`INSERT INTO chat_logs (session_id, role, content, active_packs)
+                 VALUES (${sessionId}, 'assistant', ${replyText}, ${activePacks})`
+          : Promise.resolve(),
+      ]).then(() => console.log("Chat log success"))
+        .catch(err => console.error("Chat log error:", err.message))
+    );
   }
 
   return Response.json(data);

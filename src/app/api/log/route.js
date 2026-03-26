@@ -1,4 +1,5 @@
-import { sql } from "@vercel/postgres";
+import { neon } from "@neondatabase/serverless";
+import { waitUntil } from "@vercel/functions";
 
 // POST /api/log
 // Body: { type: "consent",      sessionId, consented }
@@ -18,35 +19,41 @@ export async function POST(req) {
     return Response.json({ ok: false, error: "Missing type or sessionId" });
   }
 
-  try {
-    if (type === "consent") {
-      await sql`
-        INSERT INTO consent_logs (session_id, consented)
-        VALUES (${sessionId}, ${body.consented ?? true})
-      `;
-
-    } else if (type === "pack_toggle") {
-      const { packKey, packLabel, packActive } = body;
-      await sql`
-        INSERT INTO teach_logs (session_id, type, pack_key, pack_label, pack_active)
-        VALUES (${sessionId}, 'pack_toggle', ${packKey}, ${packLabel}, ${packActive})
-      `;
-
-    } else if (type === "custom_entry") {
-      const { title, body: entryBody } = body;
-      await sql`
-        INSERT INTO teach_logs (session_id, type, title, body)
-        VALUES (${sessionId}, 'custom_entry', ${title}, ${entryBody})
-      `;
-
-    } else {
-      return Response.json({ ok: false, error: `Unknown log type: ${type}` });
-    }
-
-    return Response.json({ ok: true });
-  } catch (err) {
-    // Log to server console but always return 200 — logging must never break the UX
-    console.error("Log write error:", err.message);
-    return Response.json({ ok: false, error: err.message });
+  if (!process.env.naieve_db_POSTGRES_URL_NON_POOLING) {
+    return Response.json({ ok: false, error: "Missing database connection string" });
   }
+
+  const sql = neon(process.env.naieve_db_POSTGRES_URL_NON_POOLING);
+
+  if (type === "consent") {
+    waitUntil(
+      sql`INSERT INTO consent_logs (session_id, consented)
+          VALUES (${sessionId}, ${body.consented ?? true})`
+        .then(() => console.log("Consent log success"))
+        .catch(err => console.error("Consent log error:", err.message))
+    );
+
+  } else if (type === "pack_toggle") {
+    const { packKey, packLabel, packActive } = body;
+    waitUntil(
+      sql`INSERT INTO teach_logs (session_id, type, pack_key, pack_label, pack_active)
+          VALUES (${sessionId}, 'pack_toggle', ${packKey}, ${packLabel}, ${packActive})`
+        .then(() => console.log("Pack toggle log success"))
+        .catch(err => console.error("Pack toggle log error:", err.message))
+    );
+
+  } else if (type === "custom_entry") {
+    const { title, body: entryBody } = body;
+    waitUntil(
+      sql`INSERT INTO teach_logs (session_id, type, title, body)
+          VALUES (${sessionId}, 'custom_entry', ${title}, ${entryBody})`
+        .then(() => console.log("Custom entry log success"))
+        .catch(err => console.error("Custom entry log error:", err.message))
+    );
+
+  } else {
+    return Response.json({ ok: false, error: `Unknown log type: ${type}` });
+  }
+
+  return Response.json({ ok: true });
 }
