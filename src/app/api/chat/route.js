@@ -1,4 +1,5 @@
 import { sql } from "@/lib/db";
+import { getSession } from "@/lib/session";
 
 // Retry with exponential backoff — handles 529 Overloaded, 5xx, and empty responses
 async function fetchWithRetry(url, options, maxRetries = 3) {
@@ -21,6 +22,12 @@ async function safeJson(resp) {
 
 
 export async function POST(req) {
+  // Authenticated users only — this route spends the Anthropic key.
+  const session = await getSession();
+  if (!session?.uid) {
+    return Response.json({ error: { message: "Not signed in" } }, { status: 401 });
+  }
+
   let body;
   try {
     body = await req.json();
@@ -67,16 +74,18 @@ export async function POST(req) {
   const replyText = (data.content || []).map(c => c.text || "").join("");
 
   // ── Log to Postgres (fire-and-forget; never blocks or breaks the response) ─
+  // user_id comes from the server session — a client-supplied one is ignored.
+  // sessionId is only the browser-tab / conversation label.
   if (sessionId) {
     const lastUserMsg = [...messages].reverse().find(m => m.role === "user");
     Promise.all([
       lastUserMsg
-        ? sql`INSERT INTO chat_logs (session_id, role, content, active_packs)
-               VALUES (${sessionId}, 'user', ${lastUserMsg.content}, ${activePacks})`
+        ? sql`INSERT INTO chat_logs (user_id, session_id, role, content, active_packs)
+               VALUES (${session.uid}, ${sessionId}, 'user', ${lastUserMsg.content}, ${activePacks})`
         : Promise.resolve(),
       replyText
-        ? sql`INSERT INTO chat_logs (session_id, role, content, active_packs)
-               VALUES (${sessionId}, 'assistant', ${replyText}, ${activePacks})`
+        ? sql`INSERT INTO chat_logs (user_id, session_id, role, content, active_packs)
+               VALUES (${session.uid}, ${sessionId}, 'assistant', ${replyText}, ${activePacks})`
         : Promise.resolve(),
     ]).catch(err => console.error("Chat log error:", err));
   }

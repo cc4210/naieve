@@ -1,4 +1,5 @@
 import { sql } from "@/lib/db";
+import { getSession } from "@/lib/session";
 
 // POST /api/log
 //
@@ -13,18 +14,25 @@ import { sql } from "@/lib/db";
 // NOTE: in Phase 2 sessionId goes away — identity comes from the server-side
 // Keycloak session and client-supplied ids are ignored.
 
-async function insertTeachLog({ sessionId, type, packKey, packLabel, packActive, title, body, metadata }) {
+async function insertTeachLog({ userId, sessionId, type, packKey, packLabel, packActive, title, body, metadata }) {
   await sql`
     INSERT INTO teach_logs
-      (session_id, type, pack_key, pack_label, pack_active, title, body, metadata)
+      (user_id, session_id, type, pack_key, pack_label, pack_active, title, body, metadata)
     VALUES
-      (${sessionId}, ${type}, ${packKey ?? null}, ${packLabel ?? null},
+      (${userId}, ${sessionId}, ${type}, ${packKey ?? null}, ${packLabel ?? null},
        ${packActive ?? null}, ${title ?? null}, ${body ?? null},
        ${metadata ? JSON.stringify(metadata) : null})
   `;
 }
 
 export async function POST(req) {
+  const session = await getSession();
+  if (!session?.uid) {
+    return Response.json({ ok: false, error: "Not signed in" }, { status: 401 });
+  }
+  // Identity is the server session's, never the request body's.
+  const userId = session.uid;
+
   let body;
   try {
     body = await req.json();
@@ -42,14 +50,15 @@ export async function POST(req) {
     switch (type) {
       case "consent":
         await sql`
-          INSERT INTO consent_logs (session_id, consented)
-          VALUES (${sessionId}, ${body.consented ?? true})
+          INSERT INTO consent_logs (user_id, session_id, consented)
+          VALUES (${userId}, ${sessionId}, ${body.consented ?? true})
         `;
         break;
 
       case "pack_toggle":
       case "proc_pack_toggle":
         await insertTeachLog({
+          userId,
           sessionId,
           type,
           packKey: body.packKey,
@@ -60,6 +69,7 @@ export async function POST(req) {
 
       case "custom_entry":
         await insertTeachLog({
+          userId,
           sessionId,
           type,
           title: body.title,
@@ -70,12 +80,13 @@ export async function POST(req) {
 
       case "auto_learn":
         // What Eve decided she learned from the turn.
-        await insertTeachLog({ sessionId, type, body: body.entry });
+        await insertTeachLog({ userId, sessionId, type, body: body.entry });
         break;
 
       case "filter_triggered":
         // Both sides matter for research: what Eve said, and what she said instead.
         await insertTeachLog({
+          userId,
           sessionId,
           type,
           body: body.replacement,
@@ -89,7 +100,7 @@ export async function POST(req) {
         // auto_learn, filter_triggered and proc_pack_toggle went unrecorded.
         // Keeping the payload costs a row; losing the signal is unrecoverable.
         console.warn(`Unknown log type stored verbatim: ${type}`);
-        await insertTeachLog({ sessionId, type, metadata: body });
+        await insertTeachLog({ userId, sessionId, type, metadata: body });
         break;
     }
 

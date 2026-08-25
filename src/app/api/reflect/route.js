@@ -1,3 +1,4 @@
+import { getSession } from "@/lib/session";
 // POST /api/reflect
 // After each chat turn, call this to see if Eve learned something worth noting.
 // Returns { entry: string | null } — null means nothing new was taught.
@@ -24,6 +25,12 @@ async function safeJson(resp) {
 
 
 export async function POST(req) {
+  // Spends the Anthropic key, so it needs the same gate as /api/chat.
+  const session = await getSession();
+  if (!session?.uid) {
+    return Response.json({ entry: null }, { status: 401 });
+  }
+
   let body;
   try {
     body = await req.json();

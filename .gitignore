@@ -15,8 +15,15 @@ npm-debug.log*
 # Docker volumes if ever bind-mounted
 pgdata/
 
+# Migrations must be committed: the Dockerfile does `COPY migrations ./migrations`,
+# so a build from a clone without them fails. Negation needed because the global
+# ~/.gitignore excludes *.sql, and repo rules take precedence over the global file.
+!migrations/*.sql
+
 # OS / editor
 .DS_Store
 Thumbs.db
 .idea/
 .vscode/
+
+docs/

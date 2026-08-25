@@ -1,3 +1,4 @@
+import { getSession } from "@/lib/session";
 // src/app/api/filter/route.js
 // Output filter — checks if Eve's reply used knowledge not in her notebook.
 // If it did, returns a replacement confusion response.
@@ -25,6 +26,12 @@ async function safeJson(resp) {
 
 
 export async function POST(req) {
+  // Spends the Anthropic key, so it needs the same gate as /api/chat.
+  const session = await getSession();
+  if (!session?.uid) {
+    return Response.json({ leaked: false }, { status: 401 });
+  }
+
   let body;
   try {
     body = await req.json();

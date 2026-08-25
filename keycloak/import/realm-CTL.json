@@ -1,0 +1,83 @@
+{
+  "realm": "CTL",
+  "enabled": true,
+  "sslRequired": "none",
+  "registrationAllowed": false,
+  "loginWithEmailAllowed": true,
+  "duplicateEmailsAllowed": false,
+  "resetPasswordAllowed": false,
+  "editUsernameAllowed": false,
+  "accessTokenLifespan": 300,
+  "ssoSessionIdleTimeout": 1800,
+  "ssoSessionMaxLifespan": 36000,
+  "roles": {
+    "realm": [
+      {
+        "name": "naieve_admin",
+        "description": "May export NAI:Eve transcripts (Phase 3). Distinct from app_admin and django_admin."
+      }
+    ]
+  },
+  "clients": [
+    {
+      "clientId": "ctl-naieve",
+      "name": "NAI:Eve",
+      "description": "Confidential OIDC client for the NAI:Eve Next.js app (keycloak-setup.md Recipe 2).",
+      "enabled": true,
+      "protocol": "openid-connect",
+      "publicClient": false,
+      "bearerOnly": false,
+      "secret": "local-dev-only-not-a-real-secret",
+      "standardFlowEnabled": true,
+      "implicitFlowEnabled": false,
+      "directAccessGrantsEnabled": false,
+      "serviceAccountsEnabled": false,
+      "frontchannelLogout": true,
+      "redirectUris": [
+        "http://localhost:3000/api/auth/callback"
+      ],
+      "webOrigins": [
+        "http://localhost:3000"
+      ],
+      "attributes": {
+        "pkce.code.challenge.method": "S256",
+        "post.logout.redirect.uris": "http://localhost:3000/*"
+      },
+      "defaultClientScopes": [
+        "openid",
+        "profile",
+        "email",
+        "roles",
+        "web-origins"
+      ]
+    }
+  ],
+  "users": [
+    {
+      "username": "testuser1",
+      "email": "testuser1@example.com",
+      "firstName": "Test",
+      "lastName": "One",
+      "enabled": true,
+      "emailVerified": true,
+      "requiredActions": [],
+      "credentials": [
+        { "type": "password", "value": "test1234", "temporary": false }
+      ],
+      "realmRoles": ["naieve_admin"]
+    },
+    {
+      "username": "testuser2",
+      "email": "testuser2@example.com",
+      "firstName": "Test",
+      "lastName": "Two",
+      "enabled": true,
+      "emailVerified": true,
+      "requiredActions": [],
+      "credentials": [
+        { "type": "password", "value": "test1234", "temporary": false }
+      ],
+      "realmRoles": []
+    }
+  ]
+}

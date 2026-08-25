@@ -1,8 +1,19 @@
 # Local stack. Stands in for the AWS pieces:
-#   postgres -> RDS        web -> ECS Fargate task behind albDefault
+#   postgres -> RDS        keycloak -> the CTL realm        web -> ECS Fargate
 #
-# The keycloak service arrives in Phase 2; its database is provisioned here
-# already so adding it is a compose edit and nothing else.
+# ⚠️ For AUTH development, run the app on the host, not the `web` container:
+#
+#     docker compose up -d postgres keycloak
+#     npm run dev
+#
+# Reason: the `iss` claim in a token must match what the app validates, and the
+# browser and the app must reach Keycloak at the SAME hostname. On the host both
+# see http://localhost:8080. From inside the `web` container localhost is the
+# container itself, so it would need http://keycloak:8080 — a different issuer,
+# and tokens get rejected. In production there is one public hostname and the
+# problem doesn't exist. To run fully containerized locally, add
+# `127.0.0.1 keycloak` to /etc/hosts and set OIDC_ISSUER to
+# http://keycloak:8080/realms/CTL everywhere.
 services:
   postgres:
     image: postgres:16
@@ -30,6 +41,31 @@ services:
       timeout: 5s
       retries: 10
 
+  keycloak:
+    image: quay.io/keycloak/keycloak:26.7.1
+    # --import-realm loads keycloak/import/realm-CTL.json on first start only.
+    command: ["start-dev", "--import-realm"]
+    environment:
+      KC_DB: postgres
+      KC_DB_URL: jdbc:postgresql://postgres:5432/${KEYCLOAKDB_NAME:-keycloak}
+      KC_DB_USERNAME: ${KEYCLOAKDB_USER:-keycloak}
+      KC_DB_PASSWORD: ${KEYCLOAKDB_PASSWORD:-keycloak_pass}
+      KC_BOOTSTRAP_ADMIN_USERNAME: ${KC_ADMIN_USER:-admin}
+      KC_BOOTSTRAP_ADMIN_PASSWORD: ${KC_ADMIN_PASSWORD:-admin}
+      KC_HEALTH_ENABLED: "true"
+    ports:
+      # 8081 by default: a local Apache/Tomcat on 8080 is common on these
+      # machines. Inside the container Keycloak is always on 8080, and start-dev
+      # derives its hostname from the request, so the published port is what
+      # ends up in the `iss` claim. Keep OIDC_ISSUER in step with it.
+      - "${KEYCLOAK_PORT:-8081}:8080"
+      - "${KEYCLOAK_MGMT_PORT:-9001}:9000"   # /health/ready
+    volumes:
+      - ./keycloak/import:/opt/keycloak/data/import:ro
+    depends_on:
+      postgres:
+        condition: service_healthy
+
   web:
     build:
       context: .
@@ -39,6 +75,13 @@ services:
       DATABASE_URL: postgresql://${NAIEVEDB_USER:-naieve_app}:${NAIEVEDB_PASSWORD:-naieve_pass}@postgres:5432/${NAIEVEDB_NAME:-naievedb}
       ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:?ANTHROPIC_API_KEY must be set — copy .env.example to .env}
       ADMIN_TOKEN: ${ADMIN_TOKEN:-dev_admin_token}
+      APP_BASE_URL: ${APP_BASE_URL:-http://localhost:3000}
+      AUTH_SECRET: ${AUTH_SECRET:?AUTH_SECRET must be set — openssl rand -hex 32}
+      # See the hostname warning at the top of this file: auth from inside this
+      # container needs the /etc/hosts trick, or run `npm run dev` on the host.
+      OIDC_ISSUER: ${OIDC_ISSUER:-http://localhost:8080/realms/CTL}
+      OIDC_CLIENT_ID: ${OIDC_CLIENT_ID:-ctl-naieve}
+      OIDC_CLIENT_SECRET: ${OIDC_CLIENT_SECRET:?OIDC_CLIENT_SECRET must be set}
     depends_on:
       postgres:
         condition: service_healthy
