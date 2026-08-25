@@ -1,7 +1,9 @@
-import { sql } from "@vercel/postgres";
+import { sql } from "@/lib/db";
 
 // GET /api/logs?view=chat|teach|consent|sessions&sessionId=xxx
 // Header: x-admin-token: <ADMIN_TOKEN env var>
+// Replaced by the naieve_admin realm role + /api/export in Phase 3.
+export const dynamic = "force-dynamic";
 export async function GET(req) {
   const token = req.headers.get("x-admin-token");
   if (!token || token !== process.env.ADMIN_TOKEN) {

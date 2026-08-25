@@ -1,4 +1,4 @@
-import { sql } from "@vercel/postgres";
+import { sql } from "@/lib/db";
 
 // Retry with exponential backoff — handles 529 Overloaded, 5xx, and empty responses
 async function fetchWithRetry(url, options, maxRetries = 3) {

@@ -1,2 +1,22 @@
-.vercel
+# Secrets / local config — keep the template
+.env
 .env*.local
+!.env.example
+
+# Node / Next
+node_modules/
+.next/
+next-env.d.ts
+npm-debug.log*
+
+# Vercel (legacy — deploys now go through CodeBuild → ECR → ECS)
+.vercel
+
+# Docker volumes if ever bind-mounted
+pgdata/
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/

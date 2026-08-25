@@ -1,9 +1,29 @@
-import { sql } from "@vercel/postgres";
+import { sql } from "@/lib/db";
 
 // POST /api/log
-// Body: { type: "consent",      sessionId, consented }
-//    or { type: "pack_toggle",  sessionId, packKey, packLabel, packActive }
-//    or { type: "custom_entry", sessionId, title, body }
+//
+// Event types the client emits (src/components/NAIEve.jsx):
+//   consent           { sessionId, consented }
+//   pack_toggle       { sessionId, packKey, packLabel, packActive }
+//   proc_pack_toggle  { sessionId, packKey, packLabel, packActive }
+//   custom_entry      { sessionId, title, body, mode }
+//   auto_learn        { sessionId, entry }
+//   filter_triggered  { sessionId, original, replacement }
+//
+// NOTE: in Phase 2 sessionId goes away — identity comes from the server-side
+// Keycloak session and client-supplied ids are ignored.
+
+async function insertTeachLog({ sessionId, type, packKey, packLabel, packActive, title, body, metadata }) {
+  await sql`
+    INSERT INTO teach_logs
+      (session_id, type, pack_key, pack_label, pack_active, title, body, metadata)
+    VALUES
+      (${sessionId}, ${type}, ${packKey ?? null}, ${packLabel ?? null},
+       ${packActive ?? null}, ${title ?? null}, ${body ?? null},
+       ${metadata ? JSON.stringify(metadata) : null})
+  `;
+}
+
 export async function POST(req) {
   let body;
   try {
@@ -19,28 +39,58 @@ export async function POST(req) {
   }
 
   try {
-    if (type === "consent") {
-      await sql`
-        INSERT INTO consent_logs (session_id, consented)
-        VALUES (${sessionId}, ${body.consented ?? true})
-      `;
+    switch (type) {
+      case "consent":
+        await sql`
+          INSERT INTO consent_logs (session_id, consented)
+          VALUES (${sessionId}, ${body.consented ?? true})
+        `;
+        break;
 
-    } else if (type === "pack_toggle") {
-      const { packKey, packLabel, packActive } = body;
-      await sql`
-        INSERT INTO teach_logs (session_id, type, pack_key, pack_label, pack_active)
-        VALUES (${sessionId}, 'pack_toggle', ${packKey}, ${packLabel}, ${packActive})
-      `;
+      case "pack_toggle":
+      case "proc_pack_toggle":
+        await insertTeachLog({
+          sessionId,
+          type,
+          packKey: body.packKey,
+          packLabel: body.packLabel,
+          packActive: body.packActive,
+        });
+        break;
 
-    } else if (type === "custom_entry") {
-      const { title, body: entryBody } = body;
-      await sql`
-        INSERT INTO teach_logs (session_id, type, title, body)
-        VALUES (${sessionId}, 'custom_entry', ${title}, ${entryBody})
-      `;
+      case "custom_entry":
+        await insertTeachLog({
+          sessionId,
+          type,
+          title: body.title,
+          body: body.body,
+          metadata: body.mode ? { mode: body.mode } : null,
+        });
+        break;
 
-    } else {
-      return Response.json({ ok: false, error: `Unknown log type: ${type}` });
+      case "auto_learn":
+        // What Eve decided she learned from the turn.
+        await insertTeachLog({ sessionId, type, body: body.entry });
+        break;
+
+      case "filter_triggered":
+        // Both sides matter for research: what Eve said, and what she said instead.
+        await insertTeachLog({
+          sessionId,
+          type,
+          body: body.replacement,
+          metadata: { original: body.original },
+        });
+        break;
+
+      default:
+        // Store rather than drop. An unrecognized type means the client grew an
+        // event the server doesn't know about yet — which is exactly how
+        // auto_learn, filter_triggered and proc_pack_toggle went unrecorded.
+        // Keeping the payload costs a row; losing the signal is unrecoverable.
+        console.warn(`Unknown log type stored verbatim: ${type}`);
+        await insertTeachLog({ sessionId, type, metadata: body });
+        break;
     }
 
     return Response.json({ ok: true });

@@ -1,0 +1,47 @@
+# Local stack. Stands in for the AWS pieces:
+#   postgres -> RDS        web -> ECS Fargate task behind albDefault
+#
+# The keycloak service arrives in Phase 2; its database is provisioned here
+# already so adding it is a compose edit and nothing else.
+services:
+  postgres:
+    image: postgres:16
+    environment:
+      POSTGRES_USER: ${POSTGRES_SUPER_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_SUPER_PASSWORD:-postgres}
+      POSTGRES_DB: postgres
+      # Consumed by db/init/01-init-databases.sh on first init only.
+      NAIEVEDB_NAME: ${NAIEVEDB_NAME:-naievedb}
+      NAIEVEDB_USER: ${NAIEVEDB_USER:-naieve_app}
+      NAIEVEDB_PASSWORD: ${NAIEVEDB_PASSWORD:-naieve_pass}
+      NAIEVE_EXPORT_USER: ${NAIEVE_EXPORT_USER:-naieve_export}
+      NAIEVE_EXPORT_PASSWORD: ${NAIEVE_EXPORT_PASSWORD:-naieve_export_pass}
+      KEYCLOAKDB_NAME: ${KEYCLOAKDB_NAME:-keycloak}
+      KEYCLOAKDB_USER: ${KEYCLOAKDB_USER:-keycloak}
+      KEYCLOAKDB_PASSWORD: ${KEYCLOAKDB_PASSWORD:-keycloak_pass}
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./db/init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_SUPER_USER:-postgres} -d postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  web:
+    build:
+      context: .
+    ports:
+      - "3000:3000"
+    environment:
+      DATABASE_URL: postgresql://${NAIEVEDB_USER:-naieve_app}:${NAIEVEDB_PASSWORD:-naieve_pass}@postgres:5432/${NAIEVEDB_NAME:-naievedb}
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:?ANTHROPIC_API_KEY must be set — copy .env.example to .env}
+      ADMIN_TOKEN: ${ADMIN_TOKEN:-dev_admin_token}
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+volumes:
+  pgdata:
