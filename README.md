@@ -250,8 +250,6 @@ npm run dev
 | `ANTHROPIC_API_KEY` | Claude API access |
 | `POSTGRES_URL` | Vercel Postgres / Neon connection string for logging |
 
-<!-- TODO: confirm env var names and scripts against package.json / .env.example -->
-
 ---
 
 ## Status & roadmap
@@ -284,6 +282,6 @@ npm run dev
 
 Supported by the Columbia Engineering Dean's Office (*Integrating Generative AI into Engineering Education* grant), the Office of the Vice Provost for Faculty Advancement (*aiX Faculty Fellowship*), and the Center for Teaching & Learning and the Office of the Vice Provost for Teaching, Learning, and Innovation. Thanks to **Dr. Don Visco** (Akron) and **Dr. Sourojeet Chakraborty** (JHU) for testing NAI:Eve.
 
-**Collaborate:** if you teach MEB or another ChE course and want to pilot Eve, get in touch. If you do ChE education research on AI, consider joining **ASEE ChED Co-ChEER:AI**.
+**Collaborate:** if you teach MEB or another ChE course and want to pilot Eve, get in touch. 
 
-<!-- TODO: add LICENSE and a "How to cite" block once the paper/abstract is out -->
+**AI Use Statement** Claude Code was used to develop and test this naive AI concept. Claude Co-Work was used to assist in collating papers for literature review; creating documentation; and reviewing and copyediting documents.
