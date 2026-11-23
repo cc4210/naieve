@@ -284,4 +284,4 @@ Supported by the Columbia Engineering Dean's Office (*Integrating Generative AI 
 
 **Collaborate:** if you teach MEB or another ChE course and want to pilot Eve, get in touch. 
 
-**AI Use Statement** Claude Code was used to develop and test this naive AI concept. Claude Co-Work was used to assist in collating papers for literature review; creating documentation; and reviewing and copyediting documents.
+**AI Use Statement:** Claude Code was used to develop and test this naive AI concept. Claude Co-Work was used to assist in collating papers for literature review; creating documentation; and reviewing and copyediting documents.
