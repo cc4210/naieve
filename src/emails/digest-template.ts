@@ -1,4 +1,4 @@
-import type { DigestArticle } from "../api/digest/generate/route";
+import type { DigestArticle } from "@/app/api/digest/generate/route";
 
 function sourceColor(source: string): string {
   const s = source.toLowerCase();

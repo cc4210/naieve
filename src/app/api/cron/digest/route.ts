@@ -6,7 +6,7 @@ import type { DigestArticle } from "@/app/api/digest/generate/route";
 export const runtime = "nodejs";
 export const maxDuration = 120;
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+// Created per request so a missing RESEND_API_KEY can't crash the build.
 
 export async function GET(request: Request) {
   // Verify the request is from Vercel Cron (in production)
@@ -62,7 +62,7 @@ export async function GET(request: Request) {
 
     // 3. Send via Resend
     console.log(`[cron/digest] Sending to ${toEmail}...`);
-    const { data, error } = await resend.emails.send({
+    const { data, error } = await new Resend(process.env.RESEND_API_KEY).emails.send({
       from: "Research Digest <digest@yourdomain.com>", // update with your verified Resend domain
       to: [toEmail],
       subject: `Research Digest — ${dateStr}`,
