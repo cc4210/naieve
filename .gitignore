@@ -1,2 +1,13 @@
 .vercel
 .env*.local
+
+# dependencies (reinstalled by npm install / Vercel)
+node_modules/
+
+# Next.js build output
+.next/
+out/
+
+# OS / logs
+.DS_Store
+npm-debug.log*
