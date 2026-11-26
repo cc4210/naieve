@@ -67,19 +67,28 @@ export async function POST(req) {
   };
   if (system) payload.system = system;
 
+  const send = body => fetchWithRetry("https://api.anthropic.com/v1/messages", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "x-api-key": process.env.ANTHROPIC_API_KEY,
+      "anthropic-version": "2023-06-01",
+    },
+    body: JSON.stringify(body),
+  });
+
   let resp, data;
   try {
-    resp = await fetchWithRetry("https://api.anthropic.com/v1/messages", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "x-api-key": process.env.ANTHROPIC_API_KEY,
-        "anthropic-version": "2023-06-01",
-      },
-      body: JSON.stringify(payload),
-    });
-    const raw = await resp.text();
+    resp = await send(payload);
+    let raw = await resp.text();
     data = raw ? JSON.parse(raw) : null;
+    // Newer models reject `temperature`; retry once without it.
+    if (resp.status === 400 && /temperature/i.test(data?.error?.message || "")) {
+      delete payload.temperature;
+      resp = await send(payload);
+      raw = await resp.text();
+      data = raw ? JSON.parse(raw) : null;
+    }
   } catch (err) {
     return Response.json({ error: `Anthropic request failed: ${err.message}` }, { status: 502 });
   }
